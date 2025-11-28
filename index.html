@@ -1,0 +1,260 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>0 HERO</title>
+<style>
+* {
+    font-family: Lucida Sans Typewriter,Lucida Console,monaco,Bitstream Vera Sans Mono,monospace;
+}
+
+:root {
+    --green: #3498db;
+    --darkgreen: #2ecc71;
+    --grey: #2c3e50;
+    --border-width: 8px;
+    --border: var(--border-width) solid var(--grey);
+    --big: max(5vw, 3em);
+    --medium: max(3vw, 1em);
+}
+
+#wrapper {
+	width: 100%;
+	height: 100%;
+    display: flex;
+    flex-flow: column;
+    h1 { 
+        flex: 0 1 auto;
+        text-align: center;
+        font-size: var(--big);
+        margin: 0;
+    }
+    h2 {
+        margin: 0.2em;
+        font-size: var(--medium);
+    }
+    h3 {
+        margin: 0.2em;
+        font-size: 2vw;
+    }
+	#grid {
+		display: grid;
+        flex: 1 1 auto;
+		-webkit-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+        margin: var(--border-width); 
+        border: var(--border);
+	}
+}
+.cell {
+	display: grid;
+	padding: 0;
+    margin: var(--border-width); 
+    text-align: center;
+    box-shadow: 0 0 0 var(--border-width) var(--grey);
+	align-items:center;
+    background-color: var(--green);
+}
+.selected {
+    background-color: var(--darkgreen);
+}
+.big {
+    font-size: var(--medium);
+    input {
+        width: 50%;
+		-webkit-appearance: none;
+        background-color: #9b59b6;
+		appearance: none;
+		height: 1vw;
+        margin: 1em;
+        outline: none;
+    }
+    button {
+        font-size: var(--medium);
+        padding: 0.4em;
+        background-color: #1abc9c;
+        border: var(--border);
+    }
+    button:hover {
+        background-color: #16a085;
+    }
+
+}
+#donate {
+    font-size: 1rem;
+}
+.pointer {
+    cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+    height: 3vw;
+    width: 3vw;
+    cursor: pointer;
+	background-color: var(--grey);
+   -webkit-appearance: none;
+
+}
+#counter {
+    font-size: 2vw;
+}
+.hidden {
+    display: none;
+}
+</style>
+</head>
+<body>
+    <div id="wrapper">
+        <h1>0HERO</H1>
+        <div id="counter" class="hidden">Clicks: <span id="clicks">0</span> Time: <span id="stopwatch"></span></div>
+        <div id="grid">
+        </div>
+    </div>
+<script type="text/javascript">
+var config = {
+    'startTime': null,
+    'size': 3,
+    'range': 1,
+    'stop': false,
+};
+
+const s = document.querySelector.bind(document);
+
+function drawCell(grid, x, y) {
+    let val = Math.floor(Math.random() * 10);
+    let fontSize = grid.clientHeight/config.size/2
+    let el = `<div class="cell pointer" onclick="increment(${x}, ${y})" style="font-size: ${fontSize}px" onmouseenter="highlight(${x}, ${y})">${val}</div>`;
+    grid.insertAdjacentHTML('beforeend', el);
+}
+
+function displayScore() {
+    config.stop = true;
+    let g = s('#grid');
+    g.innerHTML = `<div class="cell big">
+        <h1>Success!</h1>
+        <h2>
+            Board size: ${config.size}<br />
+            Time: ${formatTimeDiff()}<br />
+            Clicks: ${s("#clicks").innerHTML}
+        </h2>
+        <div>
+            <button onclick="window.location.reload()" class="pointer">Play again</button>
+        </div>
+        <div id="donate">
+            <a href="https://github.com/sponsors/asciimoo">Donate if <3</a>
+        </div>
+    </div>`;
+    let tplVal = `1fr`;
+    g.style.gridTemplateColumns = tplVal;
+    g.style.gridTemplateRows = tplVal;
+}
+
+function displayStartScreen() {
+    s("#grid").innerHTML =`
+    <div class="cell big">
+        <h2>Win by setting every number to 0</h2>
+        <div>
+            <h2>Board size: <span id="size_display">${config.size}<br /></span></h2>
+            <input type="range" min="3" max="8" step="1" id="size_input" value="3"/></br>
+        </div>
+        <div>
+            <button onclick="start()" class="pointer">Start</button>
+        </div>
+    </div>`;
+
+    s("#size_input").addEventListener("input", (event) => {
+        updateSizeSelect();
+    });
+}
+
+function isWin() {
+    for(let c of s('#grid').children) {
+        if(c.innerHTML != "0") {
+            return false;
+        }
+    }
+    return true;
+}
+
+function highlight(x,y) {
+    for(let c of grid.children) {
+        c.classList.remove("selected");
+    }
+    let n = Math.sqrt(grid.children.length);
+    for(let i = Math.max(x-1, 0); i <= Math.min(n-1, x+1); i++) {
+        for(let j = Math.max(y-1, 0); j <= Math.min(n-1, y+1); j++) {
+            let idx = j*n+i;
+            let el = grid.children[idx];
+            el.classList.add("selected");
+        }
+    }
+}
+
+function increment(x,y) {
+	let clicks = s("#clicks");
+    clicks.innerHTML = Number(clicks.innerHTML)+1;
+    //let n = Math.sqrt(grid.children.length);
+    let n = config.size;
+    let r = config.range
+    for(let i = Math.max(x-r, 0); i <= Math.min(n-1, x+r); i++) {
+        for(let j = Math.max(y-r, 0); j <= Math.min(n-1, y+r); j++) {
+            let idx = j*n+i;
+            let el = grid.children[idx];
+            el.innerHTML = (Number(el.innerHTML) + 1) % 10;
+        }
+    }
+    if(isWin()) {
+        displayScore();
+    }
+}
+
+function initialize() {
+    let grid = s("#grid");
+    grid.innerHTML = '';
+    let n = config.size;
+    let tplVal = `repeat(${n}, 1fr)`;
+    grid.style.gridTemplateColumns = tplVal;
+    grid.style.gridTemplateRows = tplVal;
+    for(let y = 0; y < n; y++) {
+        for(let x = 0; x < n; x++) {
+            drawCell(grid, x, y);
+        }
+    }
+}
+
+function zp(n) {
+    return n.toString().padStart(2, "0")
+}
+
+function formatTimeDiff() {
+    let t = Math.floor((performance.now()-config.startTime)/1000)
+    let sec = t % 60
+    let m = Math.floor(t/60) % 60
+    let h = Math.floor(t/60/60)
+    return `${zp(h)}:${zp(m)}:${zp(sec)}`
+}
+
+function stopwatch() {
+    if(config.stop) {
+        return;
+    }
+    s("#stopwatch").innerText = formatTimeDiff();
+}
+
+function updateSizeSelect() {
+    let val = s("#size_input").value;
+    s("#size_display").textContent = val;
+}
+
+function start() {
+    s("#counter").classList.remove("hidden");
+    config.size = Number(s("#size_input").value)
+    config.startTime = performance.now();
+    initialize();
+    setInterval(stopwatch, 100);
+}
+
+displayStartScreen();
+
+</script>
+</body>
+</html>
